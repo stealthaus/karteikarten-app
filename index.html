@@ -1,0 +1,904 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Karteikarten">
+<meta name="theme-color" content="#f2ede4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#151619" media="(prefers-color-scheme: dark)">
+<title>Karteikarten</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f2ede4;
+    --glow: rgba(255, 255, 255, .7);
+    --surface: #fffcf7;
+    --surface-2: #f6f1e8;
+    --text: #1f1c17;
+    --muted: #7b7266;
+    --border: #e4dccd;
+    --accent: #2c4a7a;
+    --accent-soft: #e4eaf4;
+    --on-accent: #ffffff;
+    --good: #2d7a52;
+    --good-soft: #e3f1e8;
+    --bad: #b84a32;
+    --bad-soft: #f8e6df;
+    --code-bg: #f4efe6;
+    --tk-anno: #a4511f;
+    --tk-str: #2d7a52;
+    --tk-key: #2c4a7a;
+    --b1: #d1735a;
+    --b2: #e09a52;
+    --b3: #cdb346;
+    --b4: #8db564;
+    --b5: #3f9068;
+    --shadow: 0 1px 2px rgba(60, 40, 10, .06), 0 14px 36px -14px rgba(60, 40, 10, .22);
+    --serif: "Fraunces", Georgia, "Times New Roman", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #151619;
+      --glow: rgba(143, 179, 234, .07);
+      --surface: #1f2024;
+      --surface-2: #26282d;
+      --text: #ece8e1;
+      --muted: #9b958b;
+      --border: #33353b;
+      --accent: #8fb3ea;
+      --accent-soft: #24304a;
+      --on-accent: #10141b;
+      --good: #74c69a;
+      --good-soft: #1d3127;
+      --bad: #ec8c74;
+      --bad-soft: #3a231e;
+      --code-bg: #26282d;
+      --tk-anno: #f0a874;
+      --tk-str: #8fd1a8;
+      --tk-key: #9fbdf0;
+      --b1: #e0846b;
+      --b2: #e8a865;
+      --b3: #d9c25c;
+      --b4: #9cc675;
+      --b5: #5bb084;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 18px 40px -16px rgba(0, 0, 0, .6);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(1100px 520px at 50% -180px, var(--glow), transparent), var(--bg);
+    color: var(--text);
+    font: 16px/1.55 var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 720px; margin: 0 auto; padding: 40px 16px 64px; }
+  button, input { font: inherit; color: inherit; }
+  .hidden { display: none !important; }
+  kbd {
+    font: 600 .7rem/1 var(--sans); padding: 3px 6px; border-radius: 5px;
+    border: 1px solid currentColor; opacity: .55;
+  }
+
+  /* ---- Topics ---- */
+  .topics { display: flex; gap: 6px; margin: 0 0 22px; overflow-x: auto; scrollbar-width: none; }
+  .topics::-webkit-scrollbar { display: none; }
+  .topics a {
+    flex: none; display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px;
+    border: 1px solid var(--border); color: var(--muted); text-decoration: none; font-size: .86rem; white-space: nowrap;
+    transition: color .15s, background .15s, border-color .15s;
+  }
+  .topics a:hover { color: var(--text); background: var(--surface-2); }
+  .topics a[aria-current="page"] { background: var(--accent-soft); border-color: transparent; color: var(--accent); font-weight: 600; }
+  .topics a:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .topics small { font-size: .75rem; opacity: .7; font-variant-numeric: tabular-nums; }
+  .eyebrow { margin: 0 0 4px; font-size: .72rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+  /* ---- Kopf ---- */
+  .top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 24px; }
+  h1 { font: 600 2rem/1.1 var(--serif); letter-spacing: -.01em; margin: 0; }
+  .sub { margin: 6px 0 0; color: var(--muted); font-size: .9rem; }
+  .dist { min-width: 220px; flex: 0 1 260px; }
+  .dist-bar { display: flex; height: 8px; border-radius: 999px; overflow: hidden; background: var(--border); gap: 2px; }
+  .dist-bar span { transition: flex-grow .4s ease; min-width: 0; }
+  .dist-legend { display: flex; justify-content: space-between; margin-top: 8px; font-size: .75rem; color: var(--muted); }
+  .dist-legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: none; display: inline-block; }
+
+  /* ---- Werkzeugleiste ---- */
+  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin: 28px 0 22px; }
+  .spacer { flex: 1; }
+  .seg { display: inline-flex; background: var(--surface-2); border: 1px solid var(--border); border-radius: 11px; padding: 3px; }
+  .seg label { position: relative; }
+  .seg input, .switch input { position: absolute; opacity: 0; pointer-events: none; }
+  .seg span {
+    display: block; padding: 6px 12px; border-radius: 8px; font-size: .86rem; color: var(--muted);
+    cursor: pointer; white-space: nowrap; transition: color .15s, background .15s;
+  }
+  .seg span:hover { color: var(--text); }
+  .seg input:checked + span { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0, 0, 0, .08), 0 0 0 1px var(--border); }
+  .seg input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: var(--muted); font-size: .88rem; user-select: none; }
+  .track { width: 34px; height: 20px; border-radius: 999px; background: var(--border); position: relative; transition: background .2s; flex: none; }
+  .track::after {
+    content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%;
+    background: var(--surface); box-shadow: 0 1px 2px rgba(0, 0, 0, .25); transition: transform .2s;
+  }
+  .switch input:checked + .track { background: var(--accent); }
+  .switch input:checked + .track::after { transform: translateX(14px); }
+  .switch input:focus-visible + .track { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .ghost {
+    border: 0; background: none; padding: 6px 10px; border-radius: 8px; font-size: .86rem;
+    color: var(--muted); cursor: pointer;
+  }
+  .ghost:hover { background: var(--surface-2); color: var(--text); }
+
+  /* ---- Rundenfortschritt ---- */
+  .round-meta { display: flex; justify-content: space-between; font-size: .8rem; color: var(--muted); margin-bottom: 8px; font-variant-numeric: tabular-nums; }
+  .progress { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 22px; }
+  .progress > div { height: 100%; background: var(--accent); width: 0; transition: width .35s ease; }
+
+  /* ---- Karte ---- */
+  .stage { position: relative; perspective: 1800px; }
+  .stage::before, .stage::after {
+    content: ""; position: absolute; inset: 0; border-radius: 18px;
+    background: var(--surface-2); border: 1px solid var(--border);
+  }
+  .stage::before, .stage::after { transform-origin: 50% 100%; }
+  .stage::before { transform: translateY(16px) scale(.92); opacity: .55; }
+  .stage::after { transform: translateY(8px) scale(.96); opacity: .9; }
+  .stage.left-1::before, .stage.left-1::after, .stage.left-2::before { display: none; }
+  .motion { position: relative; z-index: 1; }
+  .motion.out-right, .motion.out-left { transition: transform .28s ease-in, opacity .28s ease-in; opacity: 0; }
+  .motion.out-right { transform: translateX(70px) rotate(4deg); }
+  .motion.out-left { transform: translateX(-70px) rotate(-4deg); }
+  .motion.out-right .face { border-color: var(--good); }
+  .motion.out-left .face { border-color: var(--bad); }
+  .motion.in { animation: enter .32s ease-out; }
+  @keyframes enter { from { opacity: 0; transform: translateY(10px) scale(.985); } }
+
+  .flip { display: grid; transform-style: preserve-3d; transition: transform .6s cubic-bezier(.2, .75, .25, 1); cursor: pointer; }
+  .flip.instant { transition: none; }
+  .flip.flipped { transform: rotateY(180deg); }
+  .face {
+    grid-area: 1 / 1; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow);
+    padding: 24px 32px 26px; min-height: 340px; display: flex; flex-direction: column;
+    transition: border-color .2s;
+  }
+  .face-back { transform: rotateY(180deg); }
+  .face-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .chip {
+    font-size: .68rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 999px; background: var(--surface-2); color: var(--muted);
+  }
+  .chip-accent { background: var(--accent-soft); color: var(--accent); }
+  .box-badge { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; color: var(--muted); }
+  .face-body {
+    flex: 1; display: flex; align-items: center; justify-content: center; text-align: center;
+    padding: 28px 0;
+  }
+  .question { font-size: 1.55rem; line-height: 1.35; font-weight: 600; letter-spacing: -.01em; overflow-wrap: anywhere; max-width: 100%; }
+  .question.long { font-size: 1.12rem; font-weight: 500; line-height: 1.6; text-align: left; }
+  .question .line + .line { margin-top: 2px; }
+  .face-foot { text-align: center; font-size: .8rem; color: var(--muted); }
+  .echo {
+    margin: 18px 0 18px; padding-bottom: 16px; border-bottom: 1px dashed var(--border);
+    color: var(--muted); font-size: .9rem; overflow-wrap: anywhere;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .echo.mono { font-family: var(--mono); font-size: .82rem; }
+  .answer { font-size: 1.06rem; line-height: 1.7; overflow-wrap: anywhere; }
+
+  /* ---- Code ---- */
+  .front-code { font: 600 1.35rem/1.4 var(--mono); letter-spacing: -.01em; overflow-wrap: anywhere; }
+  .codeblock {
+    margin: 0; font: 500 .9rem/1.65 var(--mono); background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 16px; white-space: pre-wrap; overflow-wrap: anywhere; text-align: left;
+  }
+  .ic { -webkit-box-decoration-break: clone; box-decoration-break: clone; font-family: var(--mono); font-size: .86em; background: var(--code-bg); border: 1px solid var(--border); padding: .05em .4em; border-radius: 6px; }
+  .gap { height: .8em; }
+  .tk-anno { color: var(--tk-anno); }
+  .tk-str { color: var(--tk-str); }
+  .tk-key { color: var(--tk-key); }
+
+  /* ---- Buttons ---- */
+  .actions { display: flex; gap: 12px; margin-top: 22px; }
+  .btn {
+    flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 14px 18px; border-radius: 13px; font-weight: 600; font-size: 1rem;
+    border: 1px solid var(--border); background: var(--surface); cursor: pointer;
+    transition: transform .08s, background .15s, border-color .15s, box-shadow .15s;
+  }
+  .btn:hover { box-shadow: 0 4px 14px -6px rgba(0, 0, 0, .18); }
+  .btn:active { transform: translateY(1px); }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .btn-bad { color: var(--bad); }
+  .btn-bad:hover { background: var(--bad-soft); border-color: var(--bad); }
+  .btn-good { color: var(--good); }
+  .btn-good:hover { background: var(--good-soft); border-color: var(--good); }
+
+  /* ---- Rundenende ---- */
+  .done {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow);
+    padding: 44px 28px; text-align: center; animation: enter .4s ease-out;
+  }
+  .done-icon {
+    width: 56px; height: 56px; margin: 0 auto 16px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--good-soft); color: var(--good);
+  }
+  .done h2 { font: 600 1.7rem/1.2 var(--serif); margin: 0 0 6px; }
+  .done p { margin: 0; color: var(--muted); }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 28px auto; max-width: 440px; }
+  .stat { background: var(--surface-2); border-radius: 12px; padding: 14px 8px; }
+  .stat b { display: block; font: 600 1.6rem/1.1 var(--serif); font-variant-numeric: tabular-nums; }
+  .stat span { font-size: .75rem; color: var(--muted); }
+  .done .btn { flex: none; min-width: 220px; }
+
+  /* ---- Übersicht ---- */
+  .all { margin-top: 48px; }
+  .all summary {
+    cursor: pointer; color: var(--muted); font-size: .9rem; list-style: none;
+    display: inline-flex; align-items: center; gap: 8px; user-select: none;
+  }
+  .all summary::-webkit-details-marker { display: none; }
+  .all summary::before { content: "›"; font-size: 1.1rem; transition: transform .2s; display: inline-block; }
+  .all[open] summary::before { transform: rotate(90deg); }
+  .list { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 8px; }
+  .list li { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+  .list .q { font-weight: 600; overflow-wrap: anywhere; display: flex; gap: 10px; align-items: baseline; }
+  .list .q .dot { transform: translateY(-1px); }
+  .list .q.mono { font-family: var(--mono); font-size: .9rem; }
+  .list .a { color: var(--muted); font-size: .9rem; margin-top: 6px; padding-left: 18px; }
+  .list .a .codeblock { font-size: .8rem; padding: 10px 12px; color: var(--text); }
+
+  .foot { margin-top: 24px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 8px; }
+  .foot .ghost { font-size: .8rem; }
+
+  /* ---- Sync ---- */
+  .sync-status { font-size: .8rem; color: var(--muted); }
+  .sync-status.error { color: var(--bad); }
+  .sheet {
+    width: min(440px, calc(100vw - 32px)); padding: 24px; border: 1px solid var(--border); border-radius: 18px;
+    background: var(--surface); color: var(--text); box-shadow: var(--shadow);
+  }
+  .sheet::backdrop { background: rgba(20, 16, 10, .45); }
+  .sheet h2 { font: 600 1.4rem/1.2 var(--serif); margin: 0 0 6px; }
+  .sheet p { margin: 0 0 16px; color: var(--muted); font-size: .9rem; }
+  .sheet a { color: var(--accent); }
+  .sheet label { display: block; margin-bottom: 12px; font-size: .8rem; font-weight: 600; color: var(--muted); }
+  .sheet input {
+    display: block; width: 100%; margin-top: 6px; padding: 10px 12px; font-size: 1rem;
+    border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2);
+  }
+  .sheet input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .sheet .error { min-height: 1.4em; margin: 0; color: var(--bad); }
+  .sheet .actions { margin-top: 12px; }
+  .sheet .ghost { display: block; margin: 12px auto 0; color: var(--bad); }
+
+  @media (max-width: 600px) {
+    main { padding-top: 28px; }
+    h1 { font-size: 1.7rem; }
+    .dist { flex: 1 1 100%; }
+    .toolbar { margin: 22px 0 18px; }
+    .seg { width: 100%; }
+    .seg label { flex: 1; }
+    .seg span { padding: 6px 4px; font-size: .78rem; text-align: center; }
+    .face { padding: 20px 20px 22px; min-height: 300px; }
+    .question { font-size: 1.3rem; }
+    .front-code { font-size: 1.1rem; }
+    .btn kbd, .keys-hint { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .flip, .motion, .motion.in, .done { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <nav class="topics" id="topics" aria-label="Topics"></nav>
+
+  <header class="top">
+    <div>
+      <p class="eyebrow">Karteikarten</p>
+      <h1 id="title"></h1>
+      <p class="sub" id="sub"></p>
+    </div>
+    <div class="dist" title="Leitner-Fächer: gewusst = ein Fach weiter, nicht gewusst = zurück in Fach 1">
+      <div class="dist-bar" id="distBar"></div>
+      <div class="dist-legend" id="distLegend"></div>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="seg" role="radiogroup" aria-label="Abfragerichtung">
+      <label><input type="radio" name="mode" value="forward"><span>Karte → Erklärung</span></label>
+      <label><input type="radio" name="mode" value="reverse"><span>Erklärung → Karte</span></label>
+      <label><input type="radio" name="mode" value="mixed"><span>Gemischt</span></label>
+    </div>
+    <label class="switch" title="Nur Karten aus Fach 1–4 abfragen">
+      <input type="checkbox" id="onlyOpen"><span class="track"></span><span>Nur offene</span>
+    </label>
+    <div class="spacer"></div>
+    <button class="ghost" id="restart">↻ Neu mischen</button>
+  </div>
+
+  <div class="hidden" id="roundWrap">
+    <div class="round-meta"><span id="counter"></span><span class="keys-hint">Leertaste umdrehen · ← nochmal · → gewusst</span></div>
+    <div class="progress"><div id="bar"></div></div>
+  </div>
+
+  <section class="stage hidden" id="stage">
+    <div class="motion" id="motion">
+      <div class="flip" id="flip">
+        <article class="face face-front">
+          <div class="face-head"><span class="chip" id="frontLabel"></span><span class="box-badge" id="badgeFront"></span></div>
+          <div class="face-body"><div class="question" id="front"></div></div>
+          <div class="face-foot">Klicken zum Umdrehen</div>
+        </article>
+        <article class="face face-back">
+          <div class="face-head"><span class="chip chip-accent" id="backLabel"></span><span class="box-badge" id="badgeBack"></span></div>
+          <div class="echo" id="echo"></div>
+          <div class="answer" id="back"></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <div class="actions hidden" id="actions">
+    <button class="btn btn-primary" id="reveal">Aufdecken <kbd>Leertaste</kbd></button>
+    <button class="btn btn-bad hidden" id="again"><kbd>←</kbd> Nochmal</button>
+    <button class="btn btn-good hidden" id="known">Gewusst <kbd>→</kbd></button>
+  </div>
+
+  <section class="done hidden" id="done">
+    <div class="done-icon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+    </div>
+    <h2 id="doneTitle">Runde geschafft</h2>
+    <p id="doneText"></p>
+    <div class="stats" id="doneStats"></div>
+    <button class="btn btn-primary" id="restart2">Neue Runde <kbd>Leertaste</kbd></button>
+  </section>
+
+  <details class="all">
+    <summary>Alle Karten ansehen</summary>
+    <ul class="list" id="list"></ul>
+  </details>
+
+  <footer class="foot">
+    <span class="sync-status" id="syncStatus"></span>
+    <button class="ghost" id="syncSetup">Sync einrichten</button>
+    <button class="ghost" id="reset">Lernfortschritt zurücksetzen</button>
+  </footer>
+</main>
+
+<dialog class="sheet" id="syncDialog">
+  <form id="syncForm">
+    <h2>Sync über GitHub</h2>
+    <p>Karten und Lernfortschritt kommen aus deinem privaten Repo. Der Token bleibt nur in diesem Browser.</p>
+    <label>Repository<input name="repo" placeholder="name/karteikarten" required autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+    <label>Token<input name="token" type="password" placeholder="github_pat_…" required autocomplete="off"></label>
+    <p><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Fine-grained Token</a> nur für dieses Repo, Berechtigung „Contents: Read and write“.</p>
+    <p class="error" id="syncError"></p>
+    <div class="actions">
+      <button type="button" class="btn" id="syncCancel">Abbrechen</button>
+      <button class="btn btn-primary">Verbinden</button>
+    </div>
+    <button type="button" class="ghost" id="syncOff">Sync trennen</button>
+  </form>
+</dialog>
+
+<script>
+  // Jede Datei in topics/ meldet sich hiermit an: topic(id, name, karten).
+  const TOPICS = [];
+  const topic = (id, name, cards) => TOPICS.push({ id, name, cards });
+</script>
+<script>
+  const STORAGE_KEY = "karteikarten.progress.v2";
+  const SETTINGS_KEY = "karteikarten.settings";
+  const SYNC_KEY = "karteikarten.sync";
+  const TOPIC_CACHE_KEY = "karteikarten.topics";
+  const MAX_BOX = 5;
+  const $ = (id) => document.getElementById(id);
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // ---- Fortschritt (je Topic und Karte: Leitner-Fach b, geändert um t; Schlüssel = Vorderseite) ----
+  // Übernimmt aus `from` jede Karte, die dort neuer ist, und meldet, ob sich `into` geändert hat.
+  // Ältere Stände speichern nur das Fach als Zahl.
+  function mergeProgress(into, from) {
+    let changed = false;
+    for (const [id, cards] of Object.entries(from || {})) {
+      const mine = (into[id] ||= {});
+      for (const [q, v] of Object.entries(cards)) {
+        const theirs = typeof v === "number" ? { b: v, t: 0 } : v;
+        if (!mine[q] || theirs.t > mine[q].t) {
+          mine[q] = theirs;
+          changed = true;
+        }
+      }
+    }
+    return changed;
+  }
+
+  let progress = {};
+  try { mergeProgress(progress, JSON.parse(localStorage.getItem(STORAGE_KEY))); } catch {}
+  const save = () => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); } catch {} };
+
+  // Fortschritt aus der Zeit vor den Topics gehört zum ersten Topic.
+  function migrateV1() {
+    try {
+      const old = JSON.parse(localStorage.getItem("karteikarten.progress.v1"));
+      if (old && !progress[TOPICS[0].id]) {
+        mergeProgress(progress, { [TOPICS[0].id]: old });
+        save();
+        localStorage.removeItem("karteikarten.progress.v1");
+      }
+    } catch {}
+  }
+
+  let settings = { mode: "forward", onlyOpen: false, topic: null };
+  try { Object.assign(settings, JSON.parse(localStorage.getItem("karteikarten.progress.v1.settings"))); } catch {}
+  try { Object.assign(settings, JSON.parse(localStorage.getItem(SETTINGS_KEY))); } catch {}
+  const saveSettings = () => { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch {} };
+
+  // ---- Aktuelles Topic (per #id in der URL verlinkbar) ----
+  const findTopic = (id) => TOPICS.find((t) => t.id === id);
+  let activeTopic = null;
+  let CARDS = [];
+  const topicProgress = () => (progress[activeTopic.id] ||= {});
+  const boxOf = (card) => topicProgress()[card.q]?.b || 1;
+  const setBox = (card, b) => { topicProgress()[card.q] = { b, t: Date.now() }; };
+
+  function renderTopics() {
+    $("topics").innerHTML = TOPICS.map((t) =>
+      `<a href="#${t.id}" ${t === activeTopic ? 'aria-current="page"' : ""}>${esc(t.name)}<small>${t.cards.length}</small></a>`).join("");
+    $("title").textContent = activeTopic.name;
+    document.title = `${activeTopic.name} · Karteikarten`;
+  }
+
+  function selectTopic(t) {
+    activeTopic = t;
+    CARDS = t.cards;
+    settings.topic = t.id;
+    saveSettings();
+    if (location.hash.slice(1) !== t.id) history.replaceState(null, "", `#${t.id}`);
+    renderTopics();
+    startRound();
+  }
+
+  // ---- Darstellung ----
+  const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  // Sieht die Zeile nach Code aus? (Annotation, Property, Methodenkette, einzelner Bezeichner)
+  function isCodeLine(line) {
+    const t = line.trim();
+    return /^[@.]/.test(t) || /^[\w.-]+=\S*$/.test(t) || /^\w+\(.*\)/.test(t) || /^[\w-]+$/.test(t);
+  }
+  const isCode = (text) => text.split("\n").filter((l) => l.trim()).every(isCodeLine);
+
+  function highlight(line) {
+    const prop = line.match(/^(\s*)([\w.-]+)=(.*)$/);
+    if (prop) return `${prop[1]}<span class="tk-key">${esc(prop[2])}</span>=<span class="tk-str">${esc(prop[3])}</span>`;
+    return esc(line).replace(/("""[\s\S]*?"""|"[^"\n]*")|(@\w+)|(::class)/g, (m, str, anno, cls) =>
+      str ? `<span class="tk-str">${str}</span>` : anno ? `<span class="tk-anno">${anno}</span>` : `<span class="tk-key">${cls}</span>`);
+  }
+
+  // Fließtext: Annotationen und Funktionsaufrufe wie toRule() als Inline-Code.
+  const prose = (line) => esc(line).replace(/(@\w+(?:\([^)\n]*\))?|\b\w+\(\))/g, (m) => `<code class="ic">${highlight(m)}</code>`);
+
+  function rich(text) {
+    if (isCode(text)) return `<pre class="codeblock">${text.split("\n").map(highlight).join("\n")}</pre>`;
+    return text.split("\n").map((l) => {
+      if (!l.trim()) return `<div class="gap"></div>`;
+      if (isCodeLine(l)) return `<div class="line"><code class="ic">${highlight(l.trim())}</code></div>`;
+      return `<div class="line">${prose(l)}</div>`;
+    }).join("");
+  }
+
+  function renderQuestion(el, text) {
+    el.className = "question";
+    if (!text.includes("\n") && isCode(text)) {
+      el.innerHTML = `<div class="front-code">${highlight(text)}</div>`;
+    } else {
+      if (text.length > 110 || text.includes("\n")) el.classList.add("long");
+      el.innerHTML = rich(text);
+    }
+  }
+
+  const boxBadge = (box) => `<span class="dot" style="--c: var(--b${box})"></span>Fach ${box}`;
+
+  // ---- Runde ----
+  let queue = [];
+  let current = null;
+  let revealed = false;
+  let busy = false;
+  let roundTotal = 0;
+  let roundAgain = 0;
+  let missed = new Set();
+
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function startRound() {
+    if (!activeTopic) return;
+    let pool = CARDS.slice();
+    if (settings.onlyOpen) pool = pool.filter((c) => boxOf(c) < MAX_BOX);
+    // Schwächste Fächer zuerst, innerhalb eines Fachs zufällig.
+    queue = shuffle(pool).sort((a, b) => boxOf(a) - boxOf(b)).map((card) => ({
+      card,
+      reverse: settings.mode === "reverse" || (settings.mode === "mixed" && Math.random() < .5),
+    }));
+    roundTotal = queue.length;
+    roundAgain = 0;
+    missed = new Set();
+    next();
+  }
+
+  function next() {
+    current = queue.shift() || null;
+    revealed = false;
+    const finished = !current;
+    ["stage", "actions", "roundWrap"].forEach((id) => $(id).classList.toggle("hidden", finished));
+    $("done").classList.toggle("hidden", !finished);
+    if (finished) {
+      renderDone();
+      updateStats();
+      return;
+    }
+
+    const { card, reverse } = current;
+    const front = reverse ? card.a : card.q;
+    $("frontLabel").textContent = reverse ? "Erklärung" : "Karte";
+    $("backLabel").textContent = reverse ? "Karte" : "Erklärung";
+    renderQuestion($("front"), front);
+    $("echo").textContent = front;
+    $("echo").classList.toggle("mono", isCode(front));
+    $("back").innerHTML = rich(reverse ? card.q : card.a);
+    $("badgeFront").innerHTML = $("badgeBack").innerHTML = boxBadge(boxOf(card));
+
+    // Ohne Animation zurück auf die Vorderseite.
+    const flip = $("flip");
+    flip.classList.add("instant");
+    flip.classList.remove("flipped");
+    void flip.offsetWidth;
+    flip.classList.remove("instant");
+
+    const left = queue.length + 1;
+    $("stage").classList.toggle("left-1", left === 1);
+    $("stage").classList.toggle("left-2", left === 2);
+    updateActions();
+    updateStats();
+  }
+
+  function updateActions() {
+    $("reveal").classList.toggle("hidden", revealed);
+    $("again").classList.toggle("hidden", !revealed);
+    $("known").classList.toggle("hidden", !revealed);
+  }
+
+  function turn() {
+    if (!current || busy) return;
+    revealed = true;
+    $("flip").classList.toggle("flipped");
+    updateActions();
+  }
+
+  function reveal() {
+    if (!current || busy) return;
+    if (!$("flip").classList.contains("flipped")) turn();
+  }
+
+  function answer(known) {
+    if (!current || !revealed || busy) return;
+    const entry = current;
+    if (known) {
+      setBox(entry.card, Math.min(MAX_BOX, boxOf(entry.card) + 1));
+    } else {
+      setBox(entry.card, 1);
+      roundAgain++;
+      missed.add(entry.card.q);
+      // Ein paar Karten später nochmal zeigen.
+      queue.splice(Math.min(queue.length, 3), 0, entry);
+    }
+    save();
+    scheduleSync();
+
+    busy = true;
+    const motion = $("motion");
+    motion.classList.add(known ? "out-right" : "out-left");
+    setTimeout(() => {
+      motion.classList.remove("out-right", "out-left", "in");
+      next();
+      void motion.offsetWidth;
+      motion.classList.add("in");
+      busy = false;
+    }, reduceMotion ? 0 : 280);
+  }
+
+  function renderDone() {
+    const mastered = CARDS.filter((c) => boxOf(c) === MAX_BOX).length;
+    if (roundTotal === 0) {
+      $("doneTitle").textContent = "Alles gemeistert";
+      $("doneText").textContent = "Alle Karten liegen in Fach 5. Schalte „Nur offene“ aus, um trotzdem zu wiederholen.";
+      $("doneStats").innerHTML = "";
+      return;
+    }
+    const firstTry = roundTotal - missed.size;
+    $("doneTitle").textContent = firstTry === roundTotal ? "Fehlerfrei!" : "Runde geschafft";
+    $("doneText").textContent = `${roundTotal} Karten durchgearbeitet.`;
+    $("doneStats").innerHTML = [
+      [firstTry, "auf Anhieb gewusst"],
+      [roundAgain, "Wiederholungen"],
+      [`${mastered}/${CARDS.length}`, "in Fach 5"],
+    ].map(([n, label]) => `<div class="stat"><b>${n}</b><span>${label}</span></div>`).join("");
+  }
+
+  function updateStats() {
+    const counts = Array(MAX_BOX).fill(0);
+    CARDS.forEach((c) => counts[boxOf(c) - 1]++);
+    $("distBar").innerHTML = counts.map((n, i) =>
+      `<span style="flex-grow:${n}; background: var(--b${i + 1})" title="Fach ${i + 1}: ${n}"></span>`).join("");
+    $("distLegend").innerHTML = counts.map((n, i) =>
+      `<span><span class="dot" style="--c: var(--b${i + 1})"></span>${n}</span>`).join("");
+    $("sub").textContent = `${CARDS.length} Karten · ${counts[MAX_BOX - 1]} gemeistert`;
+
+    const remaining = queue.length + (current ? 1 : 0);
+    $("bar").style.width = roundTotal ? `${((roundTotal - remaining) / roundTotal) * 100}%` : "100%";
+    $("counter").textContent = `${roundTotal - remaining} von ${roundTotal} erledigt`;
+
+    $("list").innerHTML = CARDS.map((c) => `
+      <li>
+        <div class="q ${isCode(c.q) ? "mono" : ""}"><span class="dot" style="--c: var(--b${boxOf(c)})" title="Fach ${boxOf(c)}"></span>${esc(c.q)}</div>
+        <div class="a">${rich(c.a)}</div>
+      </li>`).join("");
+  }
+
+  // Nach einem Sync, der Neues von einem anderen Gerät gebracht hat.
+  function refresh() {
+    if (!activeTopic) return;
+    updateStats();
+    if (current) $("badgeFront").innerHTML = $("badgeBack").innerHTML = boxBadge(boxOf(current.card));
+  }
+
+  // ---- Sync über ein privates GitHub-Repo ----
+  // Topics kommen aus topics/ im Standard-Branch, der Fortschritt liegt in progress.json auf einem
+  // eigenen Branch, damit die vielen Fortschritts-Commits die Karten-Historie nicht zumüllen.
+  const PROGRESS_BRANCH = "fortschritt";
+  const PROGRESS_FILE = "progress.json";
+  let sync = null;
+  try { sync = JSON.parse(localStorage.getItem(SYNC_KEY)); } catch {}
+
+  async function gh(path, { raw, ...opts } = {}, conf = sync) {
+    const res = await fetch(`https://api.github.com/repos/${conf.repo}${path}`, {
+      ...opts,
+      cache: "no-store",
+      headers: { Authorization: `Bearer ${conf.token}`, Accept: raw ? "application/vnd.github.raw+json" : "application/vnd.github+json" },
+    });
+    if (!res.ok) throw Object.assign(new Error(`GitHub antwortet mit ${res.status}`), { status: res.status });
+    return raw ? res.text() : res.json();
+  }
+
+  const toBase64 = (text) => {
+    let bin = "";
+    for (const byte of new TextEncoder().encode(text)) bin += String.fromCharCode(byte);
+    return btoa(bin);
+  };
+  const fromBase64 = (b64) => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\s/g, "")), (c) => c.charCodeAt(0)));
+
+  async function loadRemoteTopics() {
+    let sources;
+    try {
+      const files = (await gh("/contents/topics")).filter((f) => f.name.endsWith(".js"));
+      sources = await Promise.all(files.map((f) => gh(`/contents/topics/${encodeURIComponent(f.name)}`, { raw: true })));
+      try { localStorage.setItem(TOPIC_CACHE_KEY, JSON.stringify(sources)); } catch {}
+    } catch (e) {
+      // Offline: die zuletzt geladenen Topics nehmen.
+      try { sources = JSON.parse(localStorage.getItem(TOPIC_CACHE_KEY)); } catch {}
+      if (!sources) throw e;
+    }
+    for (const src of sources) {
+      try { new Function(src)(); } catch (e) { console.error("Topic kaputt:", e); }
+    }
+    if (!TOPICS.length) throw new Error("Keine Topics im Repo gefunden.");
+  }
+
+  async function ensureProgressBranch() {
+    try {
+      await gh(`/git/ref/heads/${PROGRESS_BRANCH}`);
+      return;
+    } catch (e) {
+      if (e.status !== 404) throw e;
+    }
+    const { default_branch } = await gh("");
+    const head = await gh(`/git/ref/heads/${default_branch}`);
+    await gh("/git/refs", { method: "POST", body: JSON.stringify({ ref: `refs/heads/${PROGRESS_BRANCH}`, sha: head.object.sha }) });
+  }
+
+  // Holt den Stand aus dem Repo, führt beide zusammen und schreibt zurück, wenn lokal Neueres dabei war.
+  async function syncOnce(retry) {
+    let remote = {};
+    let sha;
+    try {
+      const file = await gh(`/contents/${PROGRESS_FILE}?ref=${PROGRESS_BRANCH}`);
+      remote = JSON.parse(fromBase64(file.content));
+      sha = file.sha;
+    } catch (e) {
+      if (e.status !== 404) throw e;
+      await ensureProgressBranch();
+    }
+    if (mergeProgress(progress, remote)) {
+      save();
+      refresh();
+    }
+    if (!mergeProgress(remote, progress)) return;
+    const body = { message: "Lernfortschritt", content: toBase64(JSON.stringify(progress, null, 1)), branch: PROGRESS_BRANCH, sha };
+    try {
+      await gh(`/contents/${PROGRESS_FILE}`, { method: "PUT", body: JSON.stringify(body) });
+    } catch (e) {
+      // Ein anderes Gerät hat zwischendurch geschrieben: neu holen und nochmal zusammenführen.
+      if ((e.status === 409 || e.status === 422) && retry) return syncOnce(false);
+      throw e;
+    }
+  }
+
+  let syncQueue = Promise.resolve();
+  let syncTimer = null;
+
+  function syncProgress() {
+    clearTimeout(syncTimer);
+    syncTimer = null;
+    if (!sync) return Promise.resolve();
+    const time = () => new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+    return (syncQueue = syncQueue.then(() => syncOnce(true)).then(
+      () => setSyncStatus(`Synchronisiert ${time()}`),
+      (e) => setSyncStatus(e.status ? `Sync-Fehler: ${e.message}` : "Offline – wird später synchronisiert", true)));
+  }
+
+  // Nach dem Lernen kurz sammeln, damit nicht jede Karte ein eigener Commit wird.
+  function scheduleSync() {
+    if (!sync) return;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(syncProgress, 15000);
+  }
+
+  function setSyncStatus(text, error = false) {
+    $("syncStatus").textContent = text;
+    $("syncStatus").classList.toggle("error", error);
+  }
+
+  function openSyncDialog() {
+    const form = $("syncForm");
+    form.repo.value = sync?.repo || "";
+    form.token.value = sync?.token || "";
+    $("syncError").textContent = "";
+    $("syncOff").classList.toggle("hidden", !sync);
+    $("syncDialog").showModal();
+  }
+
+  $("syncForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const conf = {
+      repo: form.repo.value.trim().replace(/^https:\/\/github\.com\//, "").replace(/(\.git|\/)$/, ""),
+      token: form.token.value.trim(),
+    };
+    $("syncError").textContent = "Prüfe Zugriff …";
+    try {
+      await gh("", {}, conf);
+      localStorage.setItem(SYNC_KEY, JSON.stringify(conf));
+      location.reload();
+    } catch (err) {
+      $("syncError").textContent =
+        err.status === 401 ? "Token ungültig oder abgelaufen." :
+        err.status === 404 ? "Repo nicht gefunden – oder der Token hat keinen Zugriff darauf." : err.message;
+    }
+  });
+  $("syncCancel").addEventListener("click", () => $("syncDialog").close());
+  $("syncOff").addEventListener("click", () => {
+    if (!confirm("Sync trennen? Der Lernfortschritt bleibt in diesem Browser und im Repo erhalten.")) return;
+    localStorage.removeItem(SYNC_KEY);
+    localStorage.removeItem(TOPIC_CACHE_KEY);
+    location.reload();
+  });
+  $("syncSetup").addEventListener("click", openSyncDialog);
+
+  // Beim Wegwechseln Ausstehendes hochladen, beim Zurückkommen Neues vom anderen Gerät holen.
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" || syncTimer) syncProgress();
+  });
+
+  // ---- Events ----
+  $("flip").addEventListener("click", turn);
+  $("reveal").addEventListener("click", reveal);
+  $("again").addEventListener("click", () => answer(false));
+  $("known").addEventListener("click", () => answer(true));
+  $("restart").addEventListener("click", startRound);
+  $("restart2").addEventListener("click", startRound);
+  $("reset").addEventListener("click", () => {
+    if (!activeTopic || !confirm(`Lernfortschritt aller Karten in „${activeTopic.name}“ zurücksetzen?`)) return;
+    // Auf Fach 1 setzen statt löschen, damit der Sync das Zurücksetzen als neueren Stand erkennt.
+    CARDS.forEach((c) => setBox(c, 1));
+    save();
+    scheduleSync();
+    startRound();
+  });
+  document.querySelectorAll('input[name="mode"]').forEach((input) => {
+    input.checked = input.value === settings.mode;
+    input.addEventListener("change", () => {
+      settings.mode = input.value;
+      saveSettings();
+      input.blur();
+      startRound();
+    });
+  });
+  $("onlyOpen").checked = settings.onlyOpen;
+  $("onlyOpen").addEventListener("change", (e) => {
+    settings.onlyOpen = e.target.checked;
+    saveSettings();
+    e.target.blur();
+    startRound();
+  });
+
+  window.addEventListener("hashchange", () => {
+    const t = findTopic(location.hash.slice(1));
+    if (t && t !== activeTopic) selectTopic(t);
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.target.tagName === "INPUT" || $("syncDialog").open || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === " " || e.key === "Enter") {
+      e.preventDefault();
+      if (!current) startRound(); else turn();
+    } else if (e.key === "ArrowLeft") {
+      answer(false);
+    } else if (e.key === "ArrowRight") {
+      answer(true);
+    }
+  });
+
+  async function boot() {
+    $("syncSetup").textContent = sync ? "Sync" : "Sync einrichten";
+    if (!TOPICS.length) {
+      // Öffentliche Hülle: Topics kommen aus dem Repo.
+      if (!sync) {
+        $("sub").textContent = "Noch keine Karten – verbinde dein Repo über „Sync einrichten“.";
+        openSyncDialog();
+        return;
+      }
+      $("sub").textContent = "Lade Karten …";
+      try {
+        await loadRemoteTopics();
+      } catch (e) {
+        $("sub").textContent = `Karten konnten nicht geladen werden: ${e.message}`;
+        openSyncDialog();
+        return;
+      }
+    }
+    migrateV1();
+    // Kurz auf den Stand der anderen Geräte warten, damit die Runde schon danach sortiert ist.
+    if (sync) {
+      setSyncStatus("Synchronisiere …");
+      await Promise.race([syncProgress(), new Promise((resolve) => setTimeout(resolve, 3000))]);
+    }
+    selectTopic(findTopic(location.hash.slice(1)) || findTopic(settings.topic) || TOPICS[0]);
+  }
+
+  boot();
+</script>
+</body>
+</html>
